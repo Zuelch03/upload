@@ -2,12 +2,15 @@
 <html>
   <body>
     <h2>Upload CSV</h2>
-    <p>{{ message }}</p>
+    
+    <!-- Only show message block if there's a message -->
+    {% if message %}
+    <p>{{ message|safe }}</p>  <!-- The safe filter allows HTML in the message -->
+    {% endif %}
+    
     <form method="post" enctype="multipart/form-data">
       <input type="file" id="file" name="file" />
       <input type="submit" />
     </form>
-
-    <a href="{{ url_for('download_file') }}" class="btn btn-primary">Download result.csv</a>
   </body>
 </html>
