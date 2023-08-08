@@ -34,14 +34,20 @@ def upload_file():
 
 @app.route('/download')
 def download_file():
-    filename = request.args.get('filename', '')
-    if filename:
-        try:
-            return send_from_directory(directory=tempfile.gettempdir(), filename=filename, as_attachment=True, download_name="result.csv")
-        except FileNotFoundError:
-            return "File not found."
-    else:
-        return "Invalid request."
+  filename = request.args.get('filename', '')
+  if filename:
+    try:
+      # Specify the full path 
+      path = os.path.join(tempfile.gettempdir(), 'uploads')  
+      
+      # Send file from that path 
+      return send_from_directory(path, filename, as_attachment=True) 
+
+    except FileNotFoundError:
+      return "File not found."
+
+  else:
+    return "Invalid request."
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
