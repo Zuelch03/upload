@@ -1,53 +1,36 @@
-from flask import Flask, request, render_template, send_from_directory
+from flask import Flask, request, send_file
 import pandas as pd
 import re
-import os
-import tempfile
 
 app = Flask(__name__)
 
+@app.route('/process', methods=['POST'])  
+def process_csv():
+
+  file = request.files['file']
+  
+  df = pd.read_csv(file)
+
+  # Extract questions and responses
+  df['Q&A'] = df['add_text'].apply(extract_qa)
+  
+  # Explode list to rows
+  qa_df = df['Q&A'].explode().apply(pd.Series) 
+  qa_df.columns = ['Question', 'Response']
+
+  # Convert DataFrame to CSV bytes
+  csv_bytes = qa_df.to_csv().encode()
+  
+  return send_file(
+        io.BytesIO(csv_bytes),
+        mimetype='text/csv',
+        as_attachment=True,
+        attachment_filename='processed.csv'
+    )
+
 def extract_qa(text):
-    pattern = r'\[Q\d+\. (.*?)\]\s(.*?)(?=\s\[Q\d| $)'
-    matches = re.findall(pattern, text, re.DOTALL)
-    return matches
-
-@app.route('/', methods=['GET', 'POST'])
-def upload_file():
-    if request.method == 'POST':
-        file = request.files['file']
-        df = pd.read_csv(file)
-
-        try:
-            df['Q_and_A'] = df['add_text'].apply(extract_qa)
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.csv') as temp_file:
-                qna_df = pd.DataFrame(df['Q_and_A'].explode().tolist(), columns=['Question', 'Response'])
-                qna_df.to_csv(temp_file.name, index=False)
-                temp_file_path = temp_file.name
-
-            message = f'File processed successfully. <a href="/download?filename={os.path.basename(temp_file_path)}">Download result.csv</a>'
-        except KeyError:
-            message = "The column 'add_text' was not found in the provided CSV file."
-
-        return render_template('upload.html', message=message)
-
-    return render_template('upload.html')
-
-@app.route('/download')
-def download_file():
-  filename = request.args.get('filename', '')
-  if filename:
-    try:
-      # Specify the full path 
-      path = os.path.join(tempfile.gettempdir(), 'uploads')  
-      
-      # Send file from that path 
-      return send_from_directory(path, filename, as_attachment=True) 
-
-    except FileNotFoundError:
-      return "File not found."
-
-  else:
-    return "Invalid request."
+  pattern = r'\[Q\d+\. (.*)\]\s+(.*)'
+  return re.findall(pattern, text, re.DOTALL)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
