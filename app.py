@@ -44,4 +44,9 @@ def download_file():
         return "Invalid request."
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+=======
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
+>>>>>>> c3633ee0862e2566503cb5129cc978301c0eb69f
