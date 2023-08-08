@@ -22,7 +22,7 @@ def upload_file():
             qna_df = pd.DataFrame(df['Q_and_A'].explode().tolist(), columns=[
                                   'Question', 'Response'])
             qna_df.to_csv(result_file_path, index=False)
-            message = 'File processed successfully.'
+            message = 'File processed successfully. <a href="/download">Download result.csv</a>'
         except KeyError:
             message = "The column 'add_text' was not found in the provided CSV file."
 
@@ -32,7 +32,10 @@ def upload_file():
 
 @app.route('/download')
 def download_file():
-    return send_from_directory(directory=os.getcwd(), filename="result.csv", as_attachment=True)
+    try:
+        return send_from_directory(directory=os.getcwd(), filename="result.csv", as_attachment=True)
+    except FileNotFoundError:
+        return "File not found."
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
